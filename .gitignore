@@ -1,0 +1,23 @@
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Playwright artifacts
+playwright-report/
+test-results/
+blob-report/
+trace*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Temporary archives / build output
+*.tmp
+*.bak
+build/
+dist/
