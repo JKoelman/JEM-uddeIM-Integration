@@ -32,12 +32,46 @@ Checkpoint date: **2026-08-18**
 | N | Participant search / status filters | 5/5 PASS |
 | O | Organiser summary | 5/5 PASS |
 
-Latest locally confirmed results:
+Latest locally confirmed pre-refactor results:
 
 ```text
 Batch M2 — 5 passed (1.3m)
 Batch M3 — 6 passed (1.7m)
 ```
+
+## Architecture refactor verification
+
+The architecture refactor keeps the public Event Hub behaviour stable while responsibilities are moved from `mod_jemeventhub` into the `com_jemeventhub` technical backbone.
+
+| Phase | Package / area | Batch | Result | Verified contract |
+|---|---|---|---|---|
+| A1 | `v0.7.0-alpha1` component backbone | P | 5/5 PASS | Component dashboard and dependency health are healthy; Community Builder remains optional; placement, AJAX and module dependencies remain available. |
+| A2 | `v0.7.0-alpha2` JEM attendee provider | Q | 7/7 PASS | Organiser participant panel uses the component attendee provider and all organiser/self-registration contracts remain intact. |
+
+Latest locally confirmed refactor result:
+
+```text
+Batch Q — 7 passed (1.8m)
+```
+
+### A2 component-provider contract
+
+The organiser participant container is verified to use the component provider in normal runtime:
+
+```text
+[data-jem-eventhub-organizer-participants]
+data-participant-provider="component"
+```
+
+This is the regression signal that `mod_jemeventhub` is using the `JemAttendeeProvider` from `com_jemeventhub` rather than the temporary legacy fallback.
+
+A2 remains read-only with respect to JEM registrations. No Event Hub attendee storage or schema is introduced.
+
+### Next refactor phase
+
+A3 should centralise **Community Builder profile/avatar enrichment** behind a component service/provider while preserving the existing frontend output and the verified CB-on / CB-off fallback behaviour.
+
+The uddeIM write path remains outside this phase.
 
 ## Important verified behavioural contracts
 
@@ -52,17 +86,19 @@ Batch M3 — 6 passed (1.7m)
 - That organiser-attendee row is marked with the organiser role and, when applicable, the current-user marker.
 - The current user is excluded from the private-message recipient selector and has no self-message action.
 
-## Pre-refactor regression gate
+## Refactor regression gate
 
-Before the planned architecture refactor is considered stable, the existing Event Hub suites must be re-run against the new `com_jemeventhub` + `mod_jemeventhub` architecture without changing their public behaviour solely to satisfy the refactor.
+Each refactor phase must retain the existing verified public behaviour. Do not change frontend contracts solely to satisfy the refactor.
 
-Additional hardening to add after the architectural baseline is green:
+Additional hardening after the architectural baseline is green:
 
 - dependency/health preflight;
 - security/privacy recipient manipulation;
 - installer/update contract;
 - performance / N+1 checks for larger attendee sets;
-- central status-mapping regression coverage.
+- central status-mapping regression coverage;
+- consistent empty/error states;
+- component/service adapter separation.
 
 ## Local environment baseline
 
@@ -75,3 +111,4 @@ Current shared development baseline:
 - Playwright Chromium
 - `--workers=1`
 - autonomous test fixtures where practical
+- Joomla site timezone rather than a hardcoded local timezone
