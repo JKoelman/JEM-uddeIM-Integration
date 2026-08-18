@@ -27,13 +27,15 @@ Checkpoint date: **2026-08-18**
 | K | Community Builder avatar foundation | 5/5 PASS |
 | L | Organiser card | 5/5 PASS |
 | M | Organiser participants panel | 5/5 PASS |
+| M2 | Open gesprek interaction hardening | 5/5 PASS |
 | M3 | Organiser-attendee role consistency | 6/6 PASS |
 | N | Participant search / status filters | 5/5 PASS |
 | O | Organiser summary | 5/5 PASS |
 
-Latest locally confirmed result:
+Latest locally confirmed results:
 
 ```text
+Batch M2 — 5 passed (1.3m)
 Batch M3 — 6 passed (1.7m)
 ```
 
@@ -45,6 +47,7 @@ Batch M3 — 6 passed (1.7m)
 - Community Builder remains optional enrichment only.
 - Event announcement recipients are validated server-side against active/eligible JEM attendees.
 - Waitlist/inactive users are not treated as eligible private-message recipients.
+- `Open gesprek` opens a previously collapsed private-conversation section, shows the selected participant, exposes the direct-message form, performs one conversation AJAX request without document reload, and can reopen the conversation after it is collapsed again.
 - A current organiser who is also a real JEM attendee remains visible in the participant panel and summary.
 - That organiser-attendee row is marked with the organiser role and, when applicable, the current-user marker.
 - The current user is excluded from the private-message recipient selector and has no self-message action.
