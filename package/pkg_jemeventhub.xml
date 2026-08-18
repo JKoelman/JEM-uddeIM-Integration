@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="package" method="upgrade">
+    <name>PKG_JEMEVENTHUB</name>
+    <packagename>jemeventhub</packagename>
+    <version>0.6.18.3</version>
+    <creationDate>2026-08-16</creationDate>
+    <author>JEM Event Hub</author>
+    <license>GNU General Public License version 2 or later</license>
+    <description>JEM Event Hub module with event placement and AJAX search plugins.</description>
+    <scriptfile>script.php</scriptfile>
+    <files>
+        <file type="module" id="mod_jemeventhub" client="site">mod_jemeventhub_v0.6.18.3.zip</file>
+        <file type="plugin" id="jemeventhubplacement" group="system">plg_system_jemeventhubplacement_v0.6.13.1.zip</file>
+        <file type="plugin" id="jemeventhubsearch" group="ajax">plg_ajax_jemeventhubsearch_v0.6.13.1.zip</file>
+    </files>
+</extension>
