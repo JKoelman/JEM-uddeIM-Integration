@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="system" method="upgrade">
+    <name>PLG_SYSTEM_JEMEVENTHUBPLACEMENT</name>
+    <author>JEM Event Hub</author>
+    <creationDate>2026-08-12</creationDate>
+    <copyright>(C) 2026</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.6.12</version>
+    <description>PLG_SYSTEM_JEMEVENTHUBPLACEMENT_XML_DESCRIPTION</description>
+    <namespace path="src">JemEventHub\Plugin\System\JemEventHubPlacement</namespace>
+    <files>
+        <folder plugin="jemeventhubplacement">services</folder>
+        <folder>src</folder>
+        <folder>language</folder>
+    </files>
+</extension>
