@@ -47,11 +47,14 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 |---|---|---|---|---|
 | A1 | `v0.7.0-alpha1` component backbone | P | 5/5 PASS | Component dashboard and dependency health are healthy; Community Builder remains optional; placement, AJAX and module dependencies remain available. |
 | A2 | `v0.7.0-alpha2` JEM attendee provider | Q | 7/7 PASS | Organiser participant panel uses the component attendee provider and all organiser/self-registration contracts remain intact. |
+| A3 | `v0.7.0-alpha3` Community Builder profile provider | R | 5/5 PASS | Participant and organiser runtimes use the component CB profile provider; existing organiser/participant profile links remain intact; CB-off keeps the provider loaded while publishing no CB profile links. |
 
-Latest locally confirmed refactor result:
+Latest locally confirmed refactor results:
 
 ```text
 Batch Q — 7 passed (1.8m)
+Batch J + K regression gate on alpha3 — 10 passed (2.9m)
+Batch R — 5 passed (1.6m)
 ```
 
 ### A2 component-provider contract
@@ -67,11 +70,28 @@ This is the regression signal that `mod_jemeventhub` is using the `JemAttendeePr
 
 A2 remains read-only with respect to JEM registrations. No Event Hub attendee storage or schema is introduced.
 
+### A3 Community Builder provider contract
+
+The Event Hub runtime is verified to use the component Community Builder provider:
+
+```text
+data-profile-provider="component"
+```
+
+Verified behaviour:
+
+- participant runtime uses the component provider;
+- organiser runtime uses the same component provider;
+- organiser CB profile enrichment remains available;
+- active participant CB profile enrichment remains available;
+- with Community Builder integration disabled, the component provider remains loaded but no CB profile links are published;
+- the existing Batch J + K profile/avatar behaviour remains green on alpha3.
+
+Community Builder remains optional enrichment only. JEM remains the attendee/status source of truth and uddeIM write behaviour is not moved in A3.
+
 ### Next refactor phase
 
-A3 should centralise **Community Builder profile/avatar enrichment** behind a component service/provider while preserving the existing frontend output and the verified CB-on / CB-off fallback behaviour.
-
-The uddeIM write path remains outside this phase.
+A4 should continue centralising read/context services before moving uddeIM write paths. A suitable next candidate is the organiser/event context resolver.
 
 ## Important verified behavioural contracts
 
