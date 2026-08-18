@@ -10,21 +10,56 @@ This file is the persistent test matrix for the JEM ↔ uddeIM integration repos
 - Use one Chromium worker where shared Joomla/uddeIM configuration is modified temporarily.
 - Never store passwords, sessions or secrets in this repository.
 
-## Current contracts
+## Current verified Event Hub checkpoint
 
-| ID | Contract | Layer | Status |
-|---|---|---|---|
-| INT-JEM-001 | JEM organiser compose can open uddeIM with a preselected organiser and message context | JEM → uddeIM compose | Previously verified in shared integration work; migration to this repository pending |
-| INT-JEM-002 | Event/attendee messaging through uddeIM | JEM → uddeIM delivery | Existing shared Playwright coverage exists; repository-specific migration pending |
+Target: **JEM Event Hub v0.6.18.3**  
+Checkpoint date: **2026-08-18**
 
-## Planned contracts
-
-| ID | Contract | Notes |
+| Batch | Contract area | Result |
 |---|---|---|
-| INT-JEM-003 | Integration degrades cleanly when uddeIM is unavailable/disabled | No fatal errors or broken JEM page |
-| INT-JEM-004 | Integration degrades cleanly when JEM context is unavailable | No unintended unrestricted recipient fallback |
-| INT-JEM-005 | Event-scoped recipient rules cannot be bypassed by manually typing a username | Only applicable once strict event recipient scope is introduced |
-| INT-JEM-006 | Multiple-recipient event messaging targets only the intended active/eligible attendees | Must verify actual Inbox delivery, not UI state alone |
+| E | Itemid selector / menu context | 7/7 PASS |
+| F | Automatic placement + controlled Itemid | 6/6 PASS |
+| G | Functional event context | 6/6 PASS |
+| H | Event announcement under automatic placement | 5/5 PASS |
+| I-B | Actual uddeIM delivery/persistence with Community Builder active | 5/5 PASS |
+| I-A | Actual uddeIM delivery/persistence with Community Builder System plugin disabled | 5/5 PASS |
+| J | Community Builder profile-link foundation | 5/5 PASS |
+| K | Community Builder avatar foundation | 5/5 PASS |
+| L | Organiser card | 5/5 PASS |
+| M | Organiser participants panel | 5/5 PASS |
+| M3 | Organiser-attendee role consistency | 6/6 PASS |
+| N | Participant search / status filters | 5/5 PASS |
+| O | Organiser summary | 5/5 PASS |
+
+Latest locally confirmed result:
+
+```text
+Batch M3 — 6 passed (1.7m)
+```
+
+## Important verified behavioural contracts
+
+- Native JEM attendees remain independently visible/usable when Event Hub is absent.
+- Event Hub does not replace JEM registration data.
+- uddeIM remains the message persistence/delivery layer.
+- Community Builder remains optional enrichment only.
+- Event announcement recipients are validated server-side against active/eligible JEM attendees.
+- Waitlist/inactive users are not treated as eligible private-message recipients.
+- A current organiser who is also a real JEM attendee remains visible in the participant panel and summary.
+- That organiser-attendee row is marked with the organiser role and, when applicable, the current-user marker.
+- The current user is excluded from the private-message recipient selector and has no self-message action.
+
+## Pre-refactor regression gate
+
+Before the planned architecture refactor is considered stable, the existing Event Hub suites must be re-run against the new `com_jemeventhub` + `mod_jemeventhub` architecture without changing their public behaviour solely to satisfy the refactor.
+
+Additional hardening to add after the architectural baseline is green:
+
+- dependency/health preflight;
+- security/privacy recipient manipulation;
+- installer/update contract;
+- performance / N+1 checks for larger attendee sets;
+- central status-mapping regression coverage.
 
 ## Local environment baseline
 
@@ -32,8 +67,8 @@ Current shared development baseline:
 
 - Joomla 6.x
 - JEM 5.x
-- uddeIM 5.6.x Joomla 6 compatibility work
+- uddeIM Joomla 6 compatibility work
+- Community Builder optional
 - Playwright Chromium
 - `--workers=1`
-
-Exact versions and run results should be recorded per test batch when the integration suite is moved into this repository.
+- autonomous test fixtures where practical
