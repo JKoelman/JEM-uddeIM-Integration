@@ -51,6 +51,7 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 | A4 | `v0.7.0-alpha4` event context resolver | S | 5/5 PASS | Participant and organiser runtimes use the component event context resolver; creator fallback and uddeIM organiser targeting remain correct; A2 attendee and A3 profile providers remain compatible. |
 | A5 | `v0.7.0-alpha5` messaging eligibility provider | T | 5/5 PASS | Organiser runtime uses the component messaging eligibility provider; only active valid JEM attendees enter the recipient preview; waitlist/inactive and self-recipient are excluded; A2–A4 providers remain compatible. |
 | A6 | `v0.7.0-alpha6` dependency/fallback hardening | U | 5/5 PASS | All four internal runtime services are required and healthy; frontend runtime uses strict component-service mode without legacy providers; eligibility and native JEM status/self-exclusion remain intact; Community Builder remains an optional external dependency. |
+| A7 | `v0.7.0-alpha7` generic messaging provider | V | 5/5 PASS | `MessagingProviderInterface` and `UddeimMessagingProvider` are required and healthy; frontend publishes uddeIM as the active component messaging adapter; SEF/non-SEF compose routing remains valid; real send + conversation-read roundtrip keeps message semantics intact; JEM eligibility and self-exclusion remain outside the provider. |
 
 Latest locally confirmed refactor results:
 
@@ -61,6 +62,7 @@ Batch R — 5 passed (1.6m)
 Batch S — 5 passed (2.1m)
 Batch T — 5 passed (2.0m)
 Batch U — 5 passed (1.4m)
+Batch V — 5 passed (1.4m)
 ```
 
 ### A2 component-provider contract
@@ -148,9 +150,28 @@ Verified behaviour:
 
 A6 removes the temporary A2–A5 legacy query/provider fallbacks. An internally incomplete Event Hub package should fail closed rather than silently re-enter legacy module logic.
 
+### A7 generic messaging provider contract
+
+The Event Hub runtime is verified to publish the active messaging adapter:
+
+```text
+data-messaging-provider="uddeim"
+data-messaging-provider-adapter="component"
+```
+
+Verified behaviour:
+
+- `MessagingProviderInterface` and `UddeimMessagingProvider` are required internal services and are reported healthy by the component dashboard;
+- uddeIM is the first concrete provider behind the generic messaging boundary;
+- the organiser compose-link remains correct for both SEF and non-SEF Joomla routing;
+- a real organiser-to-participant send followed by conversation-read succeeds through the adapter without changing message semantics;
+- JEM eligibility, waitlist/inactive filtering and current-user self-exclusion remain owned by the Event Hub component layer rather than the PMS adapter.
+
+A7 establishes provider abstraction only. No second PMS implementation is added and JEM remains the event/registration source of truth.
+
 ### Next refactor phase
 
-Prepare the messaging provider boundary before moving any write path. The recommended next step is to introduce a generic `MessagingProvider` contract and make uddeIM the first concrete adapter, while keeping the existing uddeIM persistence/delivery behaviour unchanged. Do not add additional PMS implementations yet.
+Do not add a second PMS yet. The next useful step is to harden provider selection and failure behaviour: define a single provider registry/resolver, make missing/unavailable providers fail closed with clear health diagnostics, and retain uddeIM as the only configured implementation. After that, security/privacy recipient-manipulation tests and installer/update coverage should be completed before broader provider expansion.
 
 ## Important verified behavioural contracts
 
@@ -171,6 +192,7 @@ Each refactor phase must retain the existing verified public behaviour. Do not c
 
 Additional hardening after the architectural baseline is green:
 
+- provider registry/resolver and unavailable-provider fail-closed behaviour;
 - security/privacy recipient manipulation;
 - installer/update contract;
 - performance / N+1 checks for larger attendee sets;
