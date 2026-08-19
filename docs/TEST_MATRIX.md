@@ -54,6 +54,7 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 | A7 | `v0.7.0-alpha7` generic messaging provider | V | 5/5 PASS | `MessagingProviderInterface` and `UddeimMessagingProvider` are required and healthy; frontend publishes uddeIM as the active component messaging adapter; SEF/non-SEF compose routing remains valid; real send + conversation-read roundtrip keeps message semantics intact; JEM eligibility and self-exclusion remain outside the provider. |
 | A8 | `v0.7.0-alpha8` messaging provider registry/resolver | W | 5/5 PASS | Registry and resolver are required and healthy; `auto` resolves to available uddeIM, explicit `uddeim` resolves the same provider, `off` fails closed without messaging actions, and switching back to `auto` restores the existing compose contract. |
 | A9 | `v0.7.0-alpha9` recipient manipulation hardening | X | 5/5 PASS | `MessagingRecipientPolicy` is required and healthy; forged, waitlist/inactive, self-recipient and cross-event recipient manipulation are blocked before the PMS provider while a valid active target continues to work. |
+| A10 | `v0.7.0-alpha10` installer/update contract hardening | Y | 5/5 PASS | Alpha10 archive/manifests are coherent, Joomla update succeeds through Extension Installer, existing module parameters/provider selection are preserved, package/component/module versions align and runtime health remains green after update. |
 
 Latest locally confirmed refactor results:
 
@@ -67,6 +68,7 @@ Batch U — 5 passed (1.4m)
 Batch V — 5 passed (1.4m)
 Batch W — 5 passed (1.6m)
 Batch X — 5 passed (2.1m)
+Batch Y — 5 passed (36.6s)
 ```
 
 ### A2 component-provider contract
@@ -213,9 +215,24 @@ Verified behaviour:
 
 A9 keeps security/privacy policy provider-independent: JEM/Event Hub owns recipient authorization, while the selected messaging provider receives only already-authorized sender/recipient context.
 
+### A10 installer/update contract hardening
+
+Installer/update consistency is now explicitly verified across the package, component and module manifests.
+
+Verified behaviour:
+
+- the alpha10 package archive and nested manifests form a coherent clean-install contract;
+- a real Joomla update from the previous installed generation to alpha10 succeeds through Extension Installer;
+- existing module parameters and messaging provider selection survive the update;
+- package, component and module all register `0.7.0-alpha10` coherently;
+- both Event Hub plugins remain installed/enabled/healthy;
+- required runtime-health remains green after update and the module can return to `auto` provider selection.
+
+A10 fixes the packaging-description drift observed in alpha9 and establishes installer/update consistency as a release gate.
+
 ### Next refactor phase
 
-A1–A9 are now green. The next high-value gate is **installer/update contract hardening**: verify clean install, update from the previous package generation, manifest/file persistence, module parameter preservation and runtime health after update. After that, performance/N+1 coverage for larger attendee sets and central status-mapping regressions are good candidates before any second PMS proof-of-concept.
+A1–A10 are now green. The next high-value gate is **performance/N+1 coverage for larger attendee sets**, followed by central status-mapping regression coverage and consistent empty/error states. A second PMS proof-of-concept should remain later than these stability gates.
 
 ## Important verified behavioural contracts
 
@@ -236,13 +253,12 @@ Each refactor phase must retain the existing verified public behaviour. Do not c
 
 Additional hardening after the architectural baseline is green:
 
-- installer/update contract;
 - performance / N+1 checks for larger attendee sets;
 - central status-mapping regression coverage;
 - consistent empty/error states;
 - component/service adapter separation;
 - generic messaging-provider adapter tests;
-- later second-provider proof-of-concept only after the security/update gates are green.
+- later second-provider proof-of-concept only after the stability gates are green.
 
 ## Local environment baseline
 
