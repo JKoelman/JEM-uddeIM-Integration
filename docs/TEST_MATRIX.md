@@ -50,6 +50,7 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 | A3 | `v0.7.0-alpha3` Community Builder profile provider | R | 5/5 PASS | Participant and organiser runtimes use the component CB profile provider; existing organiser/participant profile links remain intact; CB-off keeps the provider loaded while publishing no CB profile links. |
 | A4 | `v0.7.0-alpha4` event context resolver | S | 5/5 PASS | Participant and organiser runtimes use the component event context resolver; creator fallback and uddeIM organiser targeting remain correct; A2 attendee and A3 profile providers remain compatible. |
 | A5 | `v0.7.0-alpha5` messaging eligibility provider | T | 5/5 PASS | Organiser runtime uses the component messaging eligibility provider; only active valid JEM attendees enter the recipient preview; waitlist/inactive and self-recipient are excluded; A2–A4 providers remain compatible. |
+| A6 | `v0.7.0-alpha6` dependency/fallback hardening | U | 5/5 PASS | All four internal runtime services are required and healthy; frontend runtime uses strict component-service mode without legacy providers; eligibility and native JEM status/self-exclusion remain intact; Community Builder remains an optional external dependency. |
 
 Latest locally confirmed refactor results:
 
@@ -59,6 +60,7 @@ Batch J + K regression gate on alpha3 — 10 passed (2.9m)
 Batch R — 5 passed (1.6m)
 Batch S — 5 passed (2.1m)
 Batch T — 5 passed (2.0m)
+Batch U — 5 passed (1.4m)
 ```
 
 ### A2 component-provider contract
@@ -128,9 +130,27 @@ Verified behaviour:
 
 A5 centralises read/preview eligibility only. The existing write-time recipient validation remains in `JemeventhubHelper.php` as the server-side security gate. uddeIM persistence/delivery is not moved in A5.
 
+### A6 dependency/fallback hardening contract
+
+The Event Hub runtime is verified to use strict component-service mode:
+
+```text
+data-component-service-mode="strict"
+```
+
+Verified behaviour:
+
+- `EventContextResolver`, `JemAttendeeProvider`, `CommunityBuilderProfileProvider` and `MessagingEligibilityProvider` are required internal runtime services and are reported healthy by the component dashboard;
+- the frontend runtime uses the component services without legacy provider/query fallbacks;
+- messaging eligibility continues to work in strict mode;
+- native JEM participant status and self-recipient exclusion remain intact;
+- Community Builder itself remains optional even though the internal Community Builder profile provider is required as part of Event Hub's runtime architecture.
+
+A6 removes the temporary A2–A5 legacy query/provider fallbacks. An internally incomplete Event Hub package should fail closed rather than silently re-enter legacy module logic.
+
 ### Next refactor phase
 
-Continue centralising bounded read-side orchestration or begin dependency/fallback hardening before moving uddeIM write paths. Do not remove temporary legacy fallbacks until the component dependency contract is explicitly tested and green.
+Prepare the messaging provider boundary before moving any write path. The recommended next step is to introduce a generic `MessagingProvider` contract and make uddeIM the first concrete adapter, while keeping the existing uddeIM persistence/delivery behaviour unchanged. Do not add additional PMS implementations yet.
 
 ## Important verified behavioural contracts
 
@@ -151,13 +171,13 @@ Each refactor phase must retain the existing verified public behaviour. Do not c
 
 Additional hardening after the architectural baseline is green:
 
-- dependency/health preflight;
 - security/privacy recipient manipulation;
 - installer/update contract;
 - performance / N+1 checks for larger attendee sets;
 - central status-mapping regression coverage;
 - consistent empty/error states;
-- component/service adapter separation.
+- component/service adapter separation;
+- generic messaging-provider adapter tests.
 
 ## Local environment baseline
 
