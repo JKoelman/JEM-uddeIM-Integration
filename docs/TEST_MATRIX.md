@@ -53,6 +53,7 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 | A6 | `v0.7.0-alpha6` dependency/fallback hardening | U | 5/5 PASS | All four internal runtime services are required and healthy; frontend runtime uses strict component-service mode without legacy providers; eligibility and native JEM status/self-exclusion remain intact; Community Builder remains an optional external dependency. |
 | A7 | `v0.7.0-alpha7` generic messaging provider | V | 5/5 PASS | `MessagingProviderInterface` and `UddeimMessagingProvider` are required and healthy; frontend publishes uddeIM as the active component messaging adapter; SEF/non-SEF compose routing remains valid; real send + conversation-read roundtrip keeps message semantics intact; JEM eligibility and self-exclusion remain outside the provider. |
 | A8 | `v0.7.0-alpha8` messaging provider registry/resolver | W | 5/5 PASS | Registry and resolver are required and healthy; `auto` resolves to available uddeIM, explicit `uddeim` resolves the same provider, `off` fails closed without messaging actions, and switching back to `auto` restores the existing compose contract. |
+| A9 | `v0.7.0-alpha9` recipient manipulation hardening | X | 5/5 PASS | `MessagingRecipientPolicy` is required and healthy; forged, waitlist/inactive, self-recipient and cross-event recipient manipulation are blocked before the PMS provider while a valid active target continues to work. |
 
 Latest locally confirmed refactor results:
 
@@ -65,6 +66,7 @@ Batch T — 5 passed (2.0m)
 Batch U — 5 passed (1.4m)
 Batch V — 5 passed (1.4m)
 Batch W — 5 passed (1.6m)
+Batch X — 5 passed (2.1m)
 ```
 
 ### A2 component-provider contract
@@ -192,9 +194,28 @@ Verified behaviour:
 
 A8 still ships only uddeIM as a concrete provider. The registry/resolver is the extension point for later additional providers.
 
+### A9 recipient security policy contract
+
+Recipient validation is now explicitly centralised in the Event Hub component before any PMS-provider call:
+
+```text
+data-recipient-security-policy="component"
+```
+
+Verified behaviour:
+
+- `MessagingRecipientPolicy` is a required internal service and is reported healthy by the component dashboard;
+- a forged/non-attendee recipient ID is rejected server-side before the PMS provider;
+- waitlist and inactive registrations cannot be forced as recipients through a direct request;
+- self-recipient remains blocked even when the browser submits a crafted POST;
+- an otherwise valid active attendee from a different JEM event is rejected as cross-context;
+- a valid active attendee for the current event continues to send/read correctly after the rejection scenarios.
+
+A9 keeps security/privacy policy provider-independent: JEM/Event Hub owns recipient authorization, while the selected messaging provider receives only already-authorized sender/recipient context.
+
 ### Next refactor phase
 
-With provider selection now centralised, the next hardening phase should focus on **security/privacy recipient manipulation**. Test direct AJAX tampering, forged recipient IDs, waitlist/inactive targets, self-recipient attempts and event/recipient cross-context attacks. These checks should remain Event Hub/JEM policy and must not be delegated to the PMS adapter. After that, installer/update and larger-set performance coverage are the next high-value gates.
+A1–A9 are now green. The next high-value gate is **installer/update contract hardening**: verify clean install, update from the previous package generation, manifest/file persistence, module parameter preservation and runtime health after update. After that, performance/N+1 coverage for larger attendee sets and central status-mapping regressions are good candidates before any second PMS proof-of-concept.
 
 ## Important verified behavioural contracts
 
@@ -215,7 +236,6 @@ Each refactor phase must retain the existing verified public behaviour. Do not c
 
 Additional hardening after the architectural baseline is green:
 
-- security/privacy recipient manipulation;
 - installer/update contract;
 - performance / N+1 checks for larger attendee sets;
 - central status-mapping regression coverage;
