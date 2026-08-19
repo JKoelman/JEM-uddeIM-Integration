@@ -49,6 +49,7 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 | A2 | `v0.7.0-alpha2` JEM attendee provider | Q | 7/7 PASS | Organiser participant panel uses the component attendee provider and all organiser/self-registration contracts remain intact. |
 | A3 | `v0.7.0-alpha3` Community Builder profile provider | R | 5/5 PASS | Participant and organiser runtimes use the component CB profile provider; existing organiser/participant profile links remain intact; CB-off keeps the provider loaded while publishing no CB profile links. |
 | A4 | `v0.7.0-alpha4` event context resolver | S | 5/5 PASS | Participant and organiser runtimes use the component event context resolver; creator fallback and uddeIM organiser targeting remain correct; A2 attendee and A3 profile providers remain compatible. |
+| A5 | `v0.7.0-alpha5` messaging eligibility provider | T | 5/5 PASS | Organiser runtime uses the component messaging eligibility provider; only active valid JEM attendees enter the recipient preview; waitlist/inactive and self-recipient are excluded; A2–A4 providers remain compatible. |
 
 Latest locally confirmed refactor results:
 
@@ -57,6 +58,7 @@ Batch Q — 7 passed (1.8m)
 Batch J + K regression gate on alpha3 — 10 passed (2.9m)
 Batch R — 5 passed (1.6m)
 Batch S — 5 passed (2.1m)
+Batch T — 5 passed (2.0m)
 ```
 
 ### A2 component-provider contract
@@ -109,9 +111,26 @@ Verified behaviour:
 
 A4 remains read/context-only. Event/menu filtering, ACL and uddeIM write behaviour remain outside the resolver.
 
+### A5 messaging eligibility provider contract
+
+The organiser runtime is verified to use the component messaging eligibility provider:
+
+```text
+data-messaging-eligibility-provider="component"
+```
+
+Verified behaviour:
+
+- only active valid JEM attendees are included in the recipient preview;
+- waitlist and inactive registrations are excluded from private-message eligibility;
+- the organiser's own real JEM registration remains visible but is never a recipient;
+- A5 remains compatible with the A2 attendee provider, A3 Community Builder profile provider and A4 event context resolver.
+
+A5 centralises read/preview eligibility only. The existing write-time recipient validation remains in `JemeventhubHelper.php` as the server-side security gate. uddeIM persistence/delivery is not moved in A5.
+
 ### Next refactor phase
 
-Continue centralising read-side orchestration before touching uddeIM write paths. The next candidate should be a bounded messaging-read/eligibility service or another remaining module-owned context service, while preserving the existing public selectors and behaviour.
+Continue centralising bounded read-side orchestration or begin dependency/fallback hardening before moving uddeIM write paths. Do not remove temporary legacy fallbacks until the component dependency contract is explicitly tested and green.
 
 ## Important verified behavioural contracts
 
