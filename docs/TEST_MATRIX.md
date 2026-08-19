@@ -52,6 +52,7 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 | A5 | `v0.7.0-alpha5` messaging eligibility provider | T | 5/5 PASS | Organiser runtime uses the component messaging eligibility provider; only active valid JEM attendees enter the recipient preview; waitlist/inactive and self-recipient are excluded; A2–A4 providers remain compatible. |
 | A6 | `v0.7.0-alpha6` dependency/fallback hardening | U | 5/5 PASS | All four internal runtime services are required and healthy; frontend runtime uses strict component-service mode without legacy providers; eligibility and native JEM status/self-exclusion remain intact; Community Builder remains an optional external dependency. |
 | A7 | `v0.7.0-alpha7` generic messaging provider | V | 5/5 PASS | `MessagingProviderInterface` and `UddeimMessagingProvider` are required and healthy; frontend publishes uddeIM as the active component messaging adapter; SEF/non-SEF compose routing remains valid; real send + conversation-read roundtrip keeps message semantics intact; JEM eligibility and self-exclusion remain outside the provider. |
+| A8 | `v0.7.0-alpha8` messaging provider registry/resolver | W | 5/5 PASS | Registry and resolver are required and healthy; `auto` resolves to available uddeIM, explicit `uddeim` resolves the same provider, `off` fails closed without messaging actions, and switching back to `auto` restores the existing compose contract. |
 
 Latest locally confirmed refactor results:
 
@@ -63,6 +64,7 @@ Batch S — 5 passed (2.1m)
 Batch T — 5 passed (2.0m)
 Batch U — 5 passed (1.4m)
 Batch V — 5 passed (1.4m)
+Batch W — 5 passed (1.6m)
 ```
 
 ### A2 component-provider contract
@@ -169,9 +171,30 @@ Verified behaviour:
 
 A7 establishes provider abstraction only. No second PMS implementation is added and JEM remains the event/registration source of truth.
 
+### A8 messaging provider registry/resolver contract
+
+Provider selection is now centralised through the component registry/resolver:
+
+```text
+data-messaging-provider-resolution="registry"
+data-messaging-provider-requested="auto|uddeim|off"
+data-messaging-provider-status="available|disabled|unavailable|unsupported"
+```
+
+Verified behaviour:
+
+- `MessagingProviderRegistry` and `MessagingProviderResolver` are required internal services and are reported healthy by the component dashboard;
+- `auto` resolves through the registry to the available uddeIM provider;
+- explicit `uddeim` resolves the same provider without moving JEM policy into the PMS adapter;
+- `off` is a controlled fail-closed state and publishes no messaging actions;
+- server-side messaging resolution uses the same provider resolver, so disabling messaging cannot be bypassed by direct AJAX use;
+- returning to `auto` restores the existing uddeIM compose contract.
+
+A8 still ships only uddeIM as a concrete provider. The registry/resolver is the extension point for later additional providers.
+
 ### Next refactor phase
 
-Do not add a second PMS yet. The next useful step is to harden provider selection and failure behaviour: define a single provider registry/resolver, make missing/unavailable providers fail closed with clear health diagnostics, and retain uddeIM as the only configured implementation. After that, security/privacy recipient-manipulation tests and installer/update coverage should be completed before broader provider expansion.
+With provider selection now centralised, the next hardening phase should focus on **security/privacy recipient manipulation**. Test direct AJAX tampering, forged recipient IDs, waitlist/inactive targets, self-recipient attempts and event/recipient cross-context attacks. These checks should remain Event Hub/JEM policy and must not be delegated to the PMS adapter. After that, installer/update and larger-set performance coverage are the next high-value gates.
 
 ## Important verified behavioural contracts
 
@@ -192,14 +215,14 @@ Each refactor phase must retain the existing verified public behaviour. Do not c
 
 Additional hardening after the architectural baseline is green:
 
-- provider registry/resolver and unavailable-provider fail-closed behaviour;
 - security/privacy recipient manipulation;
 - installer/update contract;
 - performance / N+1 checks for larger attendee sets;
 - central status-mapping regression coverage;
 - consistent empty/error states;
 - component/service adapter separation;
-- generic messaging-provider adapter tests.
+- generic messaging-provider adapter tests;
+- later second-provider proof-of-concept only after the security/update gates are green.
 
 ## Local environment baseline
 
