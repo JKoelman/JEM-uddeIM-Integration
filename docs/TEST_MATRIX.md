@@ -48,6 +48,7 @@ The architecture refactor keeps the public Event Hub behaviour stable while resp
 | A1 | `v0.7.0-alpha1` component backbone | P | 5/5 PASS | Component dashboard and dependency health are healthy; Community Builder remains optional; placement, AJAX and module dependencies remain available. |
 | A2 | `v0.7.0-alpha2` JEM attendee provider | Q | 7/7 PASS | Organiser participant panel uses the component attendee provider and all organiser/self-registration contracts remain intact. |
 | A3 | `v0.7.0-alpha3` Community Builder profile provider | R | 5/5 PASS | Participant and organiser runtimes use the component CB profile provider; existing organiser/participant profile links remain intact; CB-off keeps the provider loaded while publishing no CB profile links. |
+| A4 | `v0.7.0-alpha4` event context resolver | S | 5/5 PASS | Participant and organiser runtimes use the component event context resolver; creator fallback and uddeIM organiser targeting remain correct; A2 attendee and A3 profile providers remain compatible. |
 
 Latest locally confirmed refactor results:
 
@@ -55,6 +56,7 @@ Latest locally confirmed refactor results:
 Batch Q — 7 passed (1.8m)
 Batch J + K regression gate on alpha3 — 10 passed (2.9m)
 Batch R — 5 passed (1.6m)
+Batch S — 5 passed (2.1m)
 ```
 
 ### A2 component-provider contract
@@ -89,9 +91,27 @@ Verified behaviour:
 
 Community Builder remains optional enrichment only. JEM remains the attendee/status source of truth and uddeIM write behaviour is not moved in A3.
 
+### A4 event context resolver contract
+
+The Event Hub runtime is verified to use the component event context resolver:
+
+```text
+data-event-context-provider="component"
+```
+
+Verified behaviour:
+
+- participant runtime uses the component resolver;
+- organiser runtime uses the same component resolver;
+- when no contact-user is linked, the JEM event creator remains the resolved organiser;
+- the uddeIM compose link remains targeted at the resolved organiser;
+- A4 remains compatible with the already verified A2 attendee provider and A3 Community Builder profile provider.
+
+A4 remains read/context-only. Event/menu filtering, ACL and uddeIM write behaviour remain outside the resolver.
+
 ### Next refactor phase
 
-A4 should continue centralising read/context services before moving uddeIM write paths. A suitable next candidate is the organiser/event context resolver.
+Continue centralising read-side orchestration before touching uddeIM write paths. The next candidate should be a bounded messaging-read/eligibility service or another remaining module-owned context service, while preserving the existing public selectors and behaviour.
 
 ## Important verified behavioural contracts
 
